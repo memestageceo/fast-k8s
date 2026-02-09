@@ -18,10 +18,24 @@ A tiny FastAPI web app built to teach you how **web servers**, **Docker containe
    - [Health Probes (Liveness & Readiness)](#6-health-probes--liveness--readiness)
    - [The Home Page](#7-the-home-page--endpoint)
    - [The /whoami Endpoint](#8-the-whoami-endpoint)
-5. [Key Concepts Explained](#key-concepts-explained)
-6. [Running with Docker](#running-with-docker)
-7. [Running on Kubernetes (Kind)](#running-on-kubernetes-kind)
-8. [Project File Overview](#project-file-overview)
+5. [Python Fundamentals Used in This Project](#python-fundamentals-used-in-this-project)
+   - [The `os` Module](#the-os-module)
+   - [The `sys` Module](#the-sys-module)
+   - [The `socket` Module](#the-socket-module)
+   - [The `time` Module](#the-time-module)
+   - [The `threading.Lock` Class](#the-threadinglock-class)
+   - [`import` vs `from ... import`](#import-vs-from--import)
+   - [Functions in Python (`def`)](#functions-in-python-def)
+   - [Default Parameter Values](#default-parameter-values)
+   - [Type Hints](#type-hints)
+   - [The `global` Keyword](#the-global-keyword)
+   - [Context Managers (`with`)](#context-managers-with)
+   - [Dictionaries](#dictionaries)
+   - [Type Casting with `int()`](#type-casting-with-int)
+6. [Key Concepts Explained](#key-concepts-explained)
+7. [Running with Docker](#running-with-docker)
+8. [Running on Kubernetes (Kind)](#running-on-kubernetes-kind)
+9. [Project File Overview](#project-file-overview)
 
 ---
 
@@ -288,6 +302,629 @@ for i in $(seq 1 5); do curl -s http://localhost:8080/whoami | python -m json.to
 ```
 
 If you have 3 replicas running in Kubernetes, you'll see different `pod` names in the responses — proving that Kubernetes is distributing traffic across pods.
+
+---
+
+## Python Fundamentals Used in This Project
+
+This section dives deep into the Python language features and standard-library modules that appear in `main.py`. If you're new to Python, read this first — everything below is used directly in the project.
+
+---
+
+### The `os` Module
+
+`os` stands for **Operating System**. It's a built-in Python module (no install needed) that lets your program talk to the operating system it's running on.
+
+**How it's used in `main.py`:**
+
+```python
+os.getenv("POD_NAME", "unknown")
+```
+
+`os.getenv(key, default)` reads an **environment variable**. Environment variables are key-value pairs that live *outside* your code — they're set by the shell, Docker, or Kubernetes before your program starts.
+
+```python
+# Syntax
+os.getenv("KEY")              # returns None if KEY doesn't exist
+os.getenv("KEY", "fallback")  # returns "fallback" if KEY doesn't exist
+```
+
+**Try it yourself** — open a Python shell:
+
+```python
+>>> import os
+
+# Read an env var that exists on every system
+>>> os.getenv("HOME")
+'/home/yourname'
+
+# Read one that doesn't exist — returns None
+>>> os.getenv("DOES_NOT_EXIST")
+None
+
+# Provide a default value
+>>> os.getenv("DOES_NOT_EXIST", "my-default")
+'my-default'
+```
+
+**Other common `os` uses** (not in this project but good to know):
+
+```python
+os.getcwd()                  # Get current working directory → "/home/user/fast-k8s"
+os.listdir(".")              # List files in a directory → ["main.py", "Dockerfile", ...]
+os.path.exists("main.py")    # Check if a file exists → True
+os.path.join("a", "b.txt")   # Build a path safely → "a/b.txt" (or "a\\b.txt" on Windows)
+os.makedirs("logs/2024")     # Create nested directories
+os.environ                   # A dict of ALL environment variables
+```
+
+---
+
+### The `sys` Module
+
+`sys` stands for **System**. It gives you access to things related to the Python interpreter itself.
+
+**How it's used in `main.py`:**
+
+```python
+"args": sys.argv
+```
+
+`sys.argv` is a **list of strings** — the command-line arguments used to start the program.
+
+```bash
+# If you run:
+fastapi run main.py --host 0.0.0.0
+
+# Then inside Python:
+sys.argv == ["main.py", "--host", "0.0.0.0"]
+#            ↑ [0]       ↑ [1]    ↑ [2]
+```
+
+The first element (`sys.argv[0]`) is always the script name. Everything after it is arguments you passed.
+
+**Try it yourself** — create a file called `test.py`:
+
+```python
+import sys
+print("Script name:", sys.argv[0])
+print("All arguments:", sys.argv)
+print("Number of arguments:", len(sys.argv))
+```
+
+```bash
+$ python test.py hello world 42
+Script name: test.py
+All arguments: ['test.py', 'hello', 'world', '42']
+Number of arguments: 4
+```
+
+**Other common `sys` uses:**
+
+```python
+sys.exit(0)        # Exit the program (0 = success, 1 = error)
+sys.version        # Python version string → "3.12.0 (main, Oct  2 2023, ...)"
+sys.platform       # Operating system → "linux", "darwin" (macOS), "win32"
+sys.path           # List of directories Python searches for imports
+sys.stdin          # Read from standard input
+sys.stdout.write() # Write to standard output (like print but lower level)
+```
+
+---
+
+### The `socket` Module
+
+`socket` handles **network communication**. In this project it's used for just one thing:
+
+```python
+hostname = socket.gethostname()
+```
+
+This returns the machine's hostname — a name that identifies the computer on a network.
+
+- On your laptop it might be `"my-macbook.local"`.
+- Inside a Docker container it's the container ID, like `"a1b2c3d4e5f6"`.
+- Inside a Kubernetes pod it's the pod name, like `"fastapi-inspector-7b9d4f6c8-x2k9z"`.
+
+**Try it yourself:**
+
+```python
+>>> import socket
+>>> socket.gethostname()
+'your-computer-name'
+```
+
+**Other common `socket` uses** (not in this project):
+
+```python
+# Resolve a domain name to an IP address
+socket.gethostbyname("google.com")   # → "142.250.80.46"
+
+# Get your machine's IP address
+socket.gethostbyname(socket.gethostname())   # → "192.168.1.42"
+```
+
+---
+
+### The `time` Module
+
+`time` provides time-related functions. This project uses it to track how long the app has been running.
+
+```python
+START_TIME = time.time()
+```
+
+`time.time()` returns the current time as a **Unix timestamp** — the number of seconds since January 1, 1970 (a universal reference point):
+
+```python
+>>> import time
+>>> time.time()
+1700000000.123456    # roughly November 2023
+```
+
+Then later, `is_ready()` checks elapsed time:
+
+```python
+def is_ready():
+    return (time.time() - START_TIME) > READY_AFTER
+```
+
+This is simply: *"Has the current time minus the start time exceeded the threshold?"*
+
+```python
+# If START_TIME was 1000.0, current time is 1008.0, READY_AFTER is 5:
+#   1008.0 - 1000.0 = 8.0
+#   8.0 > 5 → True (the app IS ready)
+```
+
+**Other common `time` uses:**
+
+```python
+time.sleep(2)          # Pause execution for 2 seconds
+time.time()            # Current time as float (seconds since epoch)
+
+# Measure how long something takes
+start = time.time()
+do_something()
+elapsed = time.time() - start
+print(f"Took {elapsed:.2f} seconds")
+```
+
+---
+
+### The `threading.Lock` Class
+
+A `Lock` is a synchronisation primitive from the `threading` module. Think of it like a **bathroom lock** — only one person (thread) can hold it at a time. Everyone else waits in line.
+
+```python
+from threading import Lock
+
+lock = Lock()
+```
+
+**How it's used in `main.py`:**
+
+```python
+def increment():
+    global counter
+    with lock:           # Acquire the lock (wait if someone else has it)
+        counter += 1     # Only one thread can be here at a time
+        return counter   # Lock is released automatically when we leave the 'with' block
+```
+
+**Why does this matter?** FastAPI uses multiple threads. Without a lock:
+
+```
+Thread 1: reads counter (value: 10)
+Thread 2: reads counter (value: 10)   ← stale value!
+Thread 1: writes counter = 11
+Thread 2: writes counter = 11          ← should be 12, but it's 11!
+```
+
+With a lock:
+
+```
+Thread 1: acquires lock, reads 10, writes 11, releases lock
+Thread 2: was waiting... now acquires lock, reads 11, writes 12, releases lock  ✓
+```
+
+**Standalone example:**
+
+```python
+from threading import Thread, Lock
+
+counter = 0
+lock = Lock()
+
+def count_to_1000():
+    global counter
+    for _ in range(1000):
+        with lock:
+            counter += 1
+
+# Run 10 threads simultaneously
+threads = [Thread(target=count_to_1000) for _ in range(10)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()
+
+print(counter)  # Always 10000 with the lock
+                 # Without the lock, you might get 9837, 9956, etc.
+```
+
+---
+
+### `import` vs `from ... import`
+
+Python has two styles of imports. Both appear in `main.py`:
+
+**Style 1: `import module`**
+
+```python
+import os
+import sys
+import socket
+import time
+```
+
+This imports the entire module. You access things inside it with a dot:
+
+```python
+os.getenv("KEY")        # module.function()
+sys.argv                # module.attribute
+socket.gethostname()    # module.function()
+time.time()             # module.function()
+```
+
+**Style 2: `from module import thing`**
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from threading import Lock
+```
+
+This imports specific items directly into your namespace. You use them without the module prefix:
+
+```python
+app = FastAPI()     # instead of fastapi.FastAPI()
+lock = Lock()       # instead of threading.Lock()
+```
+
+**When to use which:**
+- `import os` — When you'll use many things from the module, or when the module name is short and adds clarity (`os.getenv` is clearer than just `getenv`).
+- `from X import Y` — When you only need a few specific items, or when the full path would be verbose (`FastAPI` is nicer than `fastapi.FastAPI`).
+
+---
+
+### Functions in Python (`def`)
+
+A function is a reusable block of code. You define it with the `def` keyword:
+
+```python
+def function_name(parameter1, parameter2):
+    # code goes here
+    return result
+```
+
+**Functions from `main.py`:**
+
+```python
+# No parameters, no explicit return (returns None implicitly)
+# The @app.get decorator makes FastAPI return the dict as JSON
+async def liveness():
+    return {"status": "alive"}
+
+# One parameter with a type hint
+def home(request: Request):
+    count = increment()
+    ...
+    return templates.TemplateResponse("index.html", {...})
+
+# No parameters, returns a boolean (True/False)
+def is_ready():
+    return (time.time() - START_TIME) > READY_AFTER
+```
+
+**Key rules:**
+- Indentation matters — the function body *must* be indented (usually 4 spaces).
+- `return` sends a value back to the caller. If there's no `return`, the function returns `None`.
+- Functions can call other functions: `home()` calls `increment()`, which calls `lock.__enter__()` internally.
+
+**Standalone example:**
+
+```python
+def greet(name):
+    return f"Hello, {name}!"
+
+message = greet("Alice")
+print(message)   # "Hello, Alice!"
+```
+
+---
+
+### Default Parameter Values
+
+When you define a function, you can give parameters a **default value**. If the caller doesn't provide that argument, the default is used.
+
+**How it appears in `main.py`:**
+
+```python
+os.getenv("READY_AFTER", "5")
+#                         ↑ "5" is the default value
+```
+
+While `os.getenv` isn't your function, it follows the same pattern. Here's how you write your own:
+
+```python
+def connect(host, port=5432, timeout=30):
+    print(f"Connecting to {host}:{port} (timeout={timeout}s)")
+
+connect("db.example.com")                  # uses port=5432, timeout=30
+connect("db.example.com", 3306)            # uses port=3306, timeout=30
+connect("db.example.com", timeout=10)      # uses port=5432, timeout=10
+```
+
+**Rules for defaults:**
+1. Parameters with defaults must come **after** parameters without defaults:
+   ```python
+   def good(name, greeting="Hello"):  ...   # ✓
+   def bad(greeting="Hello", name):   ...   # ✗ SyntaxError
+   ```
+2. Default values are evaluated **once** when the function is defined, not each time it's called. This is a common gotcha with mutable defaults:
+   ```python
+   # WRONG — all calls share the same list!
+   def add_item(item, items=[]):
+       items.append(item)
+       return items
+
+   # RIGHT — use None and create a new list each time
+   def add_item(item, items=None):
+       if items is None:
+           items = []
+       items.append(item)
+       return items
+   ```
+
+---
+
+### Type Hints
+
+Type hints tell the reader (and tools like editors/linters) what type a variable or parameter should be. Python does **not** enforce them at runtime — they're purely informational.
+
+**How it appears in `main.py`:**
+
+```python
+def home(request: Request):
+#                ↑ type hint — tells you 'request' should be a Request object
+```
+
+FastAPI actually *does* use type hints at runtime to do automatic validation and dependency injection — this is special FastAPI behaviour, not standard Python.
+
+**Examples:**
+
+```python
+# Basic type hints
+def add(a: int, b: int) -> int:
+    return a + b
+
+# With default values
+def greet(name: str = "World") -> str:
+    return f"Hello, {name}!"
+
+# Variable annotations
+count: int = 0
+name: str = "inspector"
+ready: bool = False
+```
+
+Common types: `int`, `float`, `str`, `bool`, `list`, `dict`, `None`.
+
+```python
+# More complex types (from the typing module)
+from typing import Optional, List, Dict
+
+def find_user(user_id: int) -> Optional[str]:
+    """Returns the username or None if not found."""
+    ...
+
+def get_scores() -> Dict[str, int]:
+    """Returns {"alice": 95, "bob": 87}"""
+    ...
+```
+
+---
+
+### The `global` Keyword
+
+By default, assigning to a variable inside a function creates a **local** variable. If you want to modify a variable defined outside the function (at module level), you need the `global` keyword.
+
+**How it appears in `main.py`:**
+
+```python
+counter = 0   # module-level variable
+
+def increment():
+    global counter     # "I want to modify the module-level 'counter'"
+    with lock:
+        counter += 1   # this modifies the module-level counter
+        return counter
+```
+
+**Without `global`:**
+
+```python
+counter = 0
+
+def increment():
+    counter += 1   # ✗ UnboundLocalError!
+    # Python sees an assignment to 'counter' and assumes it's local,
+    # but you're trying to read it before assigning → error
+```
+
+**Reading vs writing:**
+
+```python
+counter = 0
+
+def read_counter():
+    print(counter)     # ✓ Reading a global works without the keyword
+
+def write_counter():
+    global counter     # Required only for WRITING to a global
+    counter += 1
+```
+
+**Standalone example:**
+
+```python
+score = 0
+
+def add_points(points):
+    global score
+    score += points
+
+add_points(10)
+add_points(5)
+print(score)   # 15
+```
+
+> **Note:** Heavy use of `global` is generally discouraged in large programs (it makes code harder to reason about). In this small demo app, it's fine and keeps things simple.
+
+---
+
+### Context Managers (`with`)
+
+The `with` statement automatically handles setup and cleanup. You've seen it with the lock:
+
+```python
+with lock:
+    counter += 1   # lock is held here
+# lock is automatically released here, even if an error occurred
+```
+
+This is equivalent to:
+
+```python
+lock.acquire()      # setup
+try:
+    counter += 1
+finally:
+    lock.release()  # cleanup (always runs, even on error)
+```
+
+The `with` version is shorter, cleaner, and less error-prone.
+
+**Most common use — opening files:**
+
+```python
+# BAD — if an error happens, the file might never get closed
+f = open("data.txt")
+data = f.read()
+f.close()
+
+# GOOD — file is closed automatically when the block ends
+with open("data.txt") as f:
+    data = f.read()
+# f is closed here, guaranteed
+```
+
+Any object that implements `__enter__` and `__exit__` methods can be used with `with`. Both `Lock` and `open()` implement these.
+
+---
+
+### Dictionaries
+
+A **dictionary** (`dict`) is a collection of key-value pairs. They appear all over `main.py`:
+
+```python
+# Creating a dictionary
+env = {
+    "APP_ENV": os.getenv("APP_ENV"),
+    "SERVICE_NAME": os.getenv("SERVICE_NAME"),
+    "POD_NAME": pod_name,
+    "NODE_NAME": os.getenv("NODE_NAME"),
+}
+```
+
+```python
+# Returning a dictionary (FastAPI auto-converts this to JSON)
+return {"status": "alive"}
+
+# A bigger example from the /whoami endpoint
+return {
+    "pod": os.getenv("POD_NAME"),
+    "node": os.getenv("NODE_NAME"),
+    "hostname": socket.gethostname(),
+    "count": counter,
+}
+```
+
+**Quick reference:**
+
+```python
+# Create
+user = {"name": "Alice", "age": 30}
+
+# Read
+user["name"]              # "Alice"
+user.get("email", "N/A")  # "N/A" (key missing, returns default)
+
+# Write
+user["email"] = "alice@example.com"
+
+# Delete
+del user["age"]
+
+# Loop
+for key, value in user.items():
+    print(f"{key} = {value}")
+# name = Alice
+# email = alice@example.com
+
+# Check if key exists
+"name" in user   # True
+"phone" in user  # False
+```
+
+In FastAPI, when a function returns a `dict`, it's automatically serialised to **JSON** and sent back to the browser:
+
+```python
+return {"status": "alive"}
+# Browser receives: {"status": "alive"} with Content-Type: application/json
+```
+
+---
+
+### Type Casting with `int()`
+
+`int()` converts a value to an integer.
+
+**How it appears in `main.py`:**
+
+```python
+READY_AFTER = int(os.getenv("READY_AFTER", "5"))
+```
+
+`os.getenv()` always returns a **string** (or `None`). Since we need to do math (`> READY_AFTER`), we convert it to an integer with `int()`.
+
+```python
+int("5")       # → 5
+int("42")      # → 42
+int("hello")   # → ValueError: invalid literal for int()
+int(3.7)       # → 3 (truncates, doesn't round)
+```
+
+**Other common type conversions:**
+
+```python
+str(42)        # → "42"     (int to string)
+float("3.14")  # → 3.14     (string to float)
+bool(0)        # → False    (0 is falsy)
+bool(1)        # → True     (non-zero is truthy)
+list("abc")    # → ['a', 'b', 'c']
+```
 
 ---
 
