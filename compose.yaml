@@ -1,0 +1,20 @@
+---
+services:
+  inspector:
+    build: .
+    # remove container_name for:
+    # `docker compose up --scale inspector=3`
+    # container_name: fastapi-inspector
+    ports:
+      - "8000:8000"
+
+    environment:
+      APP_ENV: compose
+      SERVICE_NAME: fastapi-inspector
+      POD_NAME: local-compose
+
+    command: >
+      fastapi run main.py --host 0.0.0.0
+
+    volumes:
+      - .:/app
