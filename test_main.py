@@ -94,7 +94,7 @@ class TestMainEndpoints:
         # Counter should be 0 since we haven't accessed home page
         assert data["count"] == 0
 
-    def test_whoami_with_environment_variables(self, client):
+    def test_whoami_with_mocked_pod_identity(self, client):
         """Test whoami endpoint with mocked pod identity."""
         with patch('main.POD_IDENTITY', {
             'pod': 'test-pod-123',
