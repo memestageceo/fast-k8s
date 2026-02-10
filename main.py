@@ -131,7 +131,7 @@ def get_pod_identity() -> dict[str, str]:
     Returns:
         dict: Dictionary containing pod, node, app_env, and service_name
     """
-    return POD_IDENTITY
+    return POD_IDENTITY.copy()
 
 
 # ----------
