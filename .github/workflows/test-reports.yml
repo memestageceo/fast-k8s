@@ -1,0 +1,90 @@
+name: Test Reports
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'cancelled'
+
+    steps:
+      - name: Download test artifacts
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          run-id: ${{ github.event.workflow_run.id }}
+          merge-multiple: true
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: github.event_name == 'workflow_run'
+        with:
+          name: Test Results
+          path: 'test-results-*.xml'
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Comment Test Summary
+        if: >
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const workflowRun = context.payload.workflow_run;
+            let summary = '### Test Results Summary 🧪\n\n';
+
+            // Use workflow run conclusion to determine status
+            if (workflowRun.conclusion === 'success') {
+              summary += '✅ All tests passed successfully!\n';
+            } else if (workflowRun.conclusion === 'failure') {
+              summary += '❌ Some tests failed. Please review the logs.\n';
+            } else {
+              summary += `⚠️ Tests completed with status: ${workflowRun.conclusion}\n`;
+            }
+
+            summary += '\nDetailed test reports are available in the ';
+            summary += 'workflow artifacts.';
+
+            // Determine the PR number associated with this workflow run
+            let prNumber = undefined;
+
+            // Prefer PR information directly from the workflow_run payload
+            if (Array.isArray(workflowRun.pull_requests) && workflowRun.pull_requests.length > 0) {
+              prNumber = workflowRun.pull_requests[0].number;
+            }
+
+            // Fallback: look up open PRs by head branch if PR number is not available
+            if (!prNumber) {
+              const pulls = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${github.event.workflow_run.head_branch}`
+              });
+
+              if (pulls.data.length > 0) {
+                prNumber = pulls.data[0].number;
+              }
+            }
+
+            if (prNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: summary
+              });
+            }
