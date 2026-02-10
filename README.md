@@ -380,11 +380,75 @@ Refresh the page multiple times — you'll see different pod names and independe
 
 | File | Purpose |
 |---|---|
-| `main.py` | The FastAPI application — all the Python code explained above. |
+| `main.py` | The FastAPI application with comprehensive error handling, logging, and type hints. |
+| `test_main.py` | Comprehensive test suite with 19 tests covering all endpoints and edge cases. |
 | `templates/index.html` | The HTML dashboard rendered by Jinja2. Uses Tailwind CSS and DaisyUI for styling. |
-| `Dockerfile` | Instructions for building a Docker image: start from Python 3.12, install dependencies, copy code, run the server. |
+| `Dockerfile` | Optimized Docker image with non-root user for security and multi-layer caching. |
 | `compose.yaml` | Docker Compose config for running locally with one command. |
-| `deploy.yaml` | Kubernetes manifests — a **Deployment** (3 replicas with health probes) and a **Service** (NodePort to expose the app). |
+| `deploy.yaml` | Kubernetes manifests with resource limits, security context, and enhanced health probes. |
 | `kind-config.yaml` | Kind cluster config that maps port 30080 inside the cluster to port 8080 on your machine. |
-| `pyproject.toml` | Python project metadata and dependencies. |
+| `pyproject.toml` | Python project metadata, dependencies, and development tools configuration. |
 | `uv.lock` | Lock file for reproducible dependency installs. |
+| `.dockerignore` | Specifies files to exclude from Docker builds for optimization. |
+| `CHANGELOG.md` | Detailed changelog of all improvements and changes. |
+
+---
+
+## Development & Testing
+
+### Running Tests
+
+This project includes a comprehensive test suite with 94% code coverage:
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests with coverage
+pytest test_main.py -v --cov=main --cov-report=term-missing
+
+# Run linting
+ruff check main.py test_main.py
+
+# Auto-fix linting issues
+ruff check --fix main.py test_main.py
+```
+
+### Code Quality Features
+
+- **Type Hints**: Complete type annotations for better IDE support and type checking
+- **Error Handling**: Comprehensive exception handling with proper logging
+- **Logging**: Structured logging with configurable levels
+- **Thread Safety**: Proper locking for concurrent counter access
+- **Input Validation**: Environment variable validation with sensible defaults
+- **Documentation**: Detailed docstrings for all functions and endpoints
+
+### Security Enhancements
+
+- **Non-root User**: Docker container runs as user ID 1000
+- **Security Context**: Kubernetes pod with dropped capabilities and privilege escalation prevention
+- **CORS**: Configurable cross-origin resource sharing middleware
+- **Resource Limits**: CPU and memory limits in Kubernetes deployment
+- **Health Checks**: Comprehensive liveness and readiness probes with proper timeouts
+
+### CI/CD
+
+The project includes GitHub Actions workflows for:
+- Automated testing on Python 3.12 and 3.13
+- Code linting with ruff
+- Coverage reporting
+
+---
+
+## Recent Improvements (v1.0.0)
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of all improvements, including:
+
+- Enhanced error handling and logging
+- Comprehensive test suite (19 tests, 94% coverage)
+- Security hardening (non-root user, security context)
+- Better resource management in Kubernetes
+- Development tools (pytest, ruff, coverage)
+- Complete type hints and documentation
+- Thread safety improvements
+
