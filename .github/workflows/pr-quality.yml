@@ -2,6 +2,7 @@ name: PR Quality Checks
 
 on:
   pull_request:
+    types: [opened, reopened, ready_for_review]
     branches: [main]
 
 permissions:
@@ -20,19 +21,20 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            const summary = `### Pull Request Quality Report 📊
-
-**PR #${pr.number}:** ${pr.title}
-**Author:** @${pr.user.login}
-**Base:** \`${pr.base.ref}\` ← **Head:** \`${pr.head.ref}\`
-
-**Changed Files:** ${pr.changed_files}
-**Additions:** +${pr.additions} | **Deletions:** -${pr.deletions}
-
----
-
-✅ Tests are running - check the workflow tabs for detailed results.
-`;
+            const summary = [
+              '### Pull Request Quality Report 📊',
+              '',
+              `**PR #${pr.number}:** ${pr.title}`,
+              `**Author:** @${pr.user.login}`,
+              `**Base:** \`${pr.base.ref}\` ← **Head:** \`${pr.head.ref}\``,
+              '',
+              `**Changed Files:** ${pr.changed_files}`,
+              `**Additions:** +${pr.additions} | **Deletions:** -${pr.deletions}`,
+              '',
+              '---',
+              '',
+              '✅ Tests are running - check the workflow tabs for detailed results.'
+            ].join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
