@@ -73,6 +73,14 @@ except ValueError:
     logger.warning("Invalid READY_AFTER value, using default: 5")
     READY_AFTER = 5
 
+# Cache pod identity information (environment variables are static for process lifetime)
+POD_IDENTITY: dict[str, str] = {
+    "pod": os.getenv("POD_NAME", "unknown"),
+    "node": os.getenv("NODE_NAME", "unknown"),
+    "app_env": os.getenv("APP_ENV", "unknown"),
+    "service_name": os.getenv("SERVICE_NAME", "unknown"),
+}
+
 
 def increment() -> int:
     """
@@ -115,17 +123,15 @@ def get_counter() -> int:
 
 def get_pod_identity() -> dict[str, str]:
     """
-    Get pod identity information from environment variables.
+    Get pod identity information from cached environment variables.
+
+    Environment variables are read once at module initialization and cached
+    since they remain static for the lifetime of the process.
 
     Returns:
         dict: Dictionary containing pod, node, app_env, and service_name
     """
-    return {
-        "pod": os.getenv("POD_NAME", "unknown"),
-        "node": os.getenv("NODE_NAME", "unknown"),
-        "app_env": os.getenv("APP_ENV", "unknown"),
-        "service_name": os.getenv("SERVICE_NAME", "unknown"),
-    }
+    return POD_IDENTITY
 
 
 # ----------

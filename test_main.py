@@ -95,10 +95,12 @@ class TestMainEndpoints:
         assert data["count"] == 0
 
     def test_whoami_with_environment_variables(self, client):
-        """Test whoami endpoint with mocked environment variables."""
-        with patch.dict('os.environ', {
-            'POD_NAME': 'test-pod-123',
-            'NODE_NAME': 'test-node-456'
+        """Test whoami endpoint with mocked pod identity."""
+        with patch('main.POD_IDENTITY', {
+            'pod': 'test-pod-123',
+            'node': 'test-node-456',
+            'app_env': 'test',
+            'service_name': 'test-service'
         }):
             response = client.get("/whoami")
             data = response.json()
