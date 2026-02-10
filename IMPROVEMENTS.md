@@ -553,7 +553,10 @@ Merge to Main
 - Mode: Maximum (`mode=max`)
 - Shared across workflow runs
 
-**Performance Impact:**
+**Performance Impact (Approximate):**
+
+These timings are estimates based on typical workflow runs and may vary depending on the environment and network conditions.
+
 | Operation | Without Cache | With Cache | Improvement |
 |-----------|--------------|------------|-------------|
 | Python setup | 45s | 10s | 78% faster |

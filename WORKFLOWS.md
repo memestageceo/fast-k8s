@@ -224,7 +224,7 @@ Workflows use minimal required permissions:
 
 1. **Security:**
    - Minimal permissions (principle of least privilege)
-   - Pinned action versions with SHA (TODO: could be enhanced)
+   - Action versions pinned to major versions (e.g., @v4, @v5)
    - Security scanning with Trivy
    - Non-root Docker user
 

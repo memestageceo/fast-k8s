@@ -66,8 +66,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: `${context.repo.owner}:` +
-                    `${github.event.workflow_run.head_branch}`
+              head: `${context.repo.owner}:${github.event.workflow_run.head_branch}`
             });
 
             if (pulls.data.length > 0) {
