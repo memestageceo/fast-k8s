@@ -102,6 +102,32 @@ def is_ready() -> bool:
     return ready
 
 
+def get_counter() -> int:
+    """
+    Thread-safe read of the current counter value.
+
+    Returns:
+        int: The current counter value
+    """
+    with lock:
+        return counter
+
+
+def get_pod_identity() -> dict[str, str]:
+    """
+    Get pod identity information from environment variables.
+
+    Returns:
+        dict: Dictionary containing pod, node, app_env, and service_name
+    """
+    return {
+        "pod": os.getenv("POD_NAME", "unknown"),
+        "node": os.getenv("NODE_NAME", "unknown"),
+        "app_env": os.getenv("APP_ENV", "unknown"),
+        "service_name": os.getenv("SERVICE_NAME", "unknown"),
+    }
+
+
 # ----------
 # Health Probes
 # ----------
@@ -180,15 +206,15 @@ def home(request: Request) -> HTMLResponse:
         count = increment()
         hostname = socket.gethostname()
 
-        pod_name = os.getenv("POD_NAME", "unknown")
+        identity = get_pod_identity()
         env = {
-            "APP_ENV": os.getenv("APP_ENV", "unknown"),
-            "SERVICE_NAME": os.getenv("SERVICE_NAME", "unknown"),
-            "POD_NAME": pod_name,
-            "NODE_NAME": os.getenv("NODE_NAME", "unknown"),
+            "APP_ENV": identity["app_env"],
+            "SERVICE_NAME": identity["service_name"],
+            "POD_NAME": identity["pod"],
+            "NODE_NAME": identity["node"],
         }
 
-        logger.info(f"Home page accessed - count: {count}, pod: {pod_name}")
+        logger.info(f"Home page accessed - count: {count}, pod: {identity['pod']}")
 
         return templates.TemplateResponse(
             request=request,
@@ -219,15 +245,13 @@ async def whoami() -> dict[str, Any]:
         dict: Pod name, node name, hostname, and request counter
     """
     try:
-        # Thread-safe counter read
-        with lock:
-            current_count = counter
+        identity = get_pod_identity()
 
         return {
-            "pod": os.getenv("POD_NAME", "unknown"),
-            "node": os.getenv("NODE_NAME", "unknown"),
+            "pod": identity["pod"],
+            "node": identity["node"],
             "hostname": socket.gethostname(),
-            "count": current_count,
+            "count": get_counter(),
             "ready": is_ready(),
         }
     except Exception as e:
