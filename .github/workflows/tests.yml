@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
+      checks: write
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
@@ -23,6 +25,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: >
+            ${{ runner.os }}-uv-${{ matrix.python-version }}-
+            ${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-${{ matrix.python-version }}-
+            ${{ runner.os }}-uv-
 
       - name: Install uv
         run: pip install uv
@@ -38,11 +52,43 @@ jobs:
 
       - name: Run tests with pytest
         run: |
-          pytest test_main.py -v --cov=main --cov-report=xml --cov-report=term
+          pytest test_main.py -v \
+            --cov=main \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-report=html \
+            --junitxml=test-results-${{ matrix.python-version }}.xml
 
-      - name: Upload coverage reports
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            test-results-${{ matrix.python-version }}.xml
+            htmlcov/
+            coverage.xml
+
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.12'
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Comment PR with coverage
+        if: >
+          github.event_name == 'pull_request' &&
+          matrix.python-version == '3.12'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 90
+          MINIMUM_ORANGE: 80
+
+      - name: Test Summary
+        if: always()
+        uses: test-summary/action@v2
+        with:
+          paths: test-results-${{ matrix.python-version }}.xml

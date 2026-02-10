@@ -1,5 +1,9 @@
 # fast-k8s — A Beginner's Guide
 
+[![Tests](https://github.com/memestageceo/fast-k8s/actions/workflows/tests.yml/badge.svg)](https://github.com/memestageceo/fast-k8s/actions/workflows/tests.yml)
+[![Docker](https://github.com/memestageceo/fast-k8s/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/memestageceo/fast-k8s/actions/workflows/docker-publish.yml)
+[![codecov](https://codecov.io/gh/memestageceo/fast-k8s/branch/main/graph/badge.svg)](https://codecov.io/gh/memestageceo/fast-k8s)
+
 A tiny FastAPI web app built to teach you how **web servers**, **Docker containers**, and **Kubernetes** work together. This README walks through every line of `main.py` so you can understand exactly what is going on — no prior experience required.
 
 ---
@@ -430,13 +434,44 @@ ruff check --fix main.py test_main.py
 - **CORS**: Configurable cross-origin resource sharing middleware
 - **Resource Limits**: CPU and memory limits in Kubernetes deployment
 - **Health Checks**: Comprehensive liveness and readiness probes with proper timeouts
+- **Security Scanning**: Automated Trivy vulnerability scanning on pull requests
 
 ### CI/CD
 
-The project includes GitHub Actions workflows for:
-- Automated testing on Python 3.12 and 3.13
-- Code linting with ruff
-- Coverage reporting
+The project includes comprehensive GitHub Actions workflows:
+
+#### Testing Workflows
+- **Tests** (`tests.yml`): Automated testing on Python 3.12 and 3.13
+  - Runs on every push to main/develop and all pull requests
+  - Includes code linting with ruff
+  - Generates coverage reports with codecov integration
+  - Produces HTML coverage reports as artifacts
+  - Caches dependencies for faster builds
+  - Provides test result summaries in PR comments
+
+#### Docker Workflows
+- **Build and Publish** (`docker-publish.yml`): Docker image builds
+  - Multi-platform builds (linux/amd64, linux/arm64)
+  - Automatic tagging with branch, SHA, and latest
+  - Build caching for faster iterations
+  - Builds on PRs (without pushing) to validate Dockerfile changes
+  - Publishes to GitHub Container Registry on main branch
+
+#### Pull Request Quality Checks
+- **PR Quality Checks** (`pr-quality.yml`): Automated quality analysis
+  - PR information summary with statistics
+  - Code quality analysis with ruff annotations
+  - Security vulnerability scanning with Trivy
+  - Code complexity metrics
+
+#### Test Reporting
+- **Test Reports** (`test-reports.yml`): Detailed test reporting
+  - Publishes test results as GitHub checks
+  - Provides detailed JUnit test reports
+  - Comments test summaries on pull requests
+  - Preserves test artifacts for review
+
+All workflows use dependency caching, proper permissions, and provide detailed feedback directly in pull requests.
 
 ---
 
