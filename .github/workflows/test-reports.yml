@@ -62,19 +62,33 @@ jobs:
             summary += '\nDetailed test reports are available in the ';
             summary += 'workflow artifacts.';
 
-            // Find the PR number from the workflow run
-            const pulls = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${github.event.workflow_run.head_branch}`
-            });
+            // Determine the PR number associated with this workflow run
+            let prNumber = undefined;
 
-            if (pulls.data.length > 0) {
+            // Prefer PR information directly from the workflow_run payload
+            if (Array.isArray(workflowRun.pull_requests) && workflowRun.pull_requests.length > 0) {
+              prNumber = workflowRun.pull_requests[0].number;
+            }
+
+            // Fallback: look up open PRs by head branch if PR number is not available
+            if (!prNumber) {
+              const pulls = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${github.event.workflow_run.head_branch}`
+              });
+
+              if (pulls.data.length > 0) {
+                prNumber = pulls.data[0].number;
+              }
+            }
+
+            if (prNumber) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: pulls.data[0].number,
+                issue_number: prNumber,
                 body: summary
               });
             }
