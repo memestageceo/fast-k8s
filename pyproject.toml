@@ -1,10 +1,41 @@
 [project]
 name = "k8-fast"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI Kubernetes Inspector - A learning tool for K8s concepts"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.128.5",
     "jinja2>=3.1.6",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.26.0",  # Required for TestClient
+    "ruff>=0.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["test_main.py"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=main --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
