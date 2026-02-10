@@ -60,21 +60,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install uv
-          uv pip install --system ruff
+          pip install ruff
 
       - name: Run ruff with annotations
         run: |
-          ruff check main.py test_main.py --output-format=github --exit-zero
-
-      - name: Check code complexity
-        run: |
-          echo "## Code Quality Metrics 📈" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### File Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          wc -l main.py test_main.py >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ruff check main.py test_main.py --output-format=github
 
   security-scan:
     name: Security Scan
@@ -84,7 +74,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: 'fs'
           scan-ref: '.'

@@ -45,12 +45,11 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          uv pip install --system ruff
           ruff check main.py test_main.py
 
       - name: Run tests with pytest
         run: |
-          pytest test_main.py --junitxml=test-results-${{ matrix.python-version }}.xml
+          pytest test_main.py --cov=. --cov-report=xml --cov-report=html --junitxml=test-results-${{ matrix.python-version }}.xml
 
       - name: Upload test results
         if: always()

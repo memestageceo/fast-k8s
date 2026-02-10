@@ -19,7 +19,6 @@ jobs:
 
     steps:
       - name: Download test artifacts
-        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
           pattern: test-results-*
@@ -28,7 +27,6 @@ jobs:
 
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
-        if: github.event_name == 'workflow_run'
         with:
           name: Test Results
           path: 'test-results-*.xml'
@@ -36,9 +34,7 @@ jobs:
           fail-on-error: false
 
       - name: Comment Test Summary
-        if: >
-          github.event_name == 'workflow_run' &&
-          github.event.workflow_run.event == 'pull_request'
+        if: github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
