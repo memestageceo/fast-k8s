@@ -1,0 +1,45 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Test and coverage
+test_*.py
+.pytest_cache
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+README.md
+*.md
+
+# Development files
+.env
+.env.local
+
+# Kubernetes and Docker Compose configs (not needed in image)
+kind-config.yaml
+compose.yaml
+
+# UV lock file (we install from pyproject.toml)
+uv.lock
