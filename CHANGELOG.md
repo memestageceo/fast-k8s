@@ -48,7 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added security context in Kubernetes deployment with privilege escalation prevention
 - Added capability dropping (ALL capabilities) in container security context
 - Proper file ownership in Docker image
-- Added CORS middleware (should be configured for production)
+- CORS middleware with configurable origins via CORS_ORIGINS environment variable
+- Disabled credentials for wildcard CORS origins to prevent CSRF attacks
+- Restricted HTTP methods in CORS to GET, POST, OPTIONS only
 - Input validation for environment variables
 
 ## [0.1.0] - Initial Release

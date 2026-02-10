@@ -40,6 +40,3 @@ README.md
 # Kubernetes and Docker Compose configs (not needed in image)
 kind-config.yaml
 compose.yaml
-
-# UV lock file (we install from pyproject.toml)
-uv.lock
