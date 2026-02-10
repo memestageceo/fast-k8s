@@ -60,21 +60,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install uv
-          uv pip install --system ruff
+          pip install ruff
 
       - name: Run ruff with annotations
         run: |
-          ruff check main.py test_main.py --output-format=github --exit-zero
-
-      - name: Check code complexity
-        run: |
-          echo "## Code Quality Metrics 📈" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### File Statistics" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          wc -l main.py test_main.py >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ruff check main.py test_main.py --output-format=github
 
   security-scan:
     name: Security Scan
