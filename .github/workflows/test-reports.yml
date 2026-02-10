@@ -46,14 +46,22 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const workflowRun = context.payload.workflow_run;
             let summary = '### Test Results Summary 🧪\n\n';
 
-            # This is a placeholder - in real scenario, parse the XML files
-            summary += '✅ All tests passed successfully!\n';
+            // Use workflow run conclusion to determine status
+            if (workflowRun.conclusion === 'success') {
+              summary += '✅ All tests passed successfully!\n';
+            } else if (workflowRun.conclusion === 'failure') {
+              summary += '❌ Some tests failed. Please review the logs.\n';
+            } else {
+              summary += `⚠️ Tests completed with status: ${workflowRun.conclusion}\n`;
+            }
+
             summary += '\nDetailed test reports are available in the ';
             summary += 'workflow artifacts.';
 
-            # Find the PR number from the workflow run
+            // Find the PR number from the workflow run
             const pulls = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
