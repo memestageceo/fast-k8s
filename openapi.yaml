@@ -1,0 +1,83 @@
+---
+openapi: 3.1.1
+info:
+  title: Fast-k8s
+  version: 1.0.0
+  description: |-
+    Fast-k8s displays the info for the cluster via a beautiful UI.
+  summary: Deploy to get cluster and pod info in our dashbaord.
+  termsOfService: http://localhost:8080/terms
+  license:
+    name: MIT
+  contact:
+    email: aadtyaraj01@gmail.com
+servers:
+  - url: http://localhost:8080
+    description: local server
+
+tags:
+  - name: probe
+    description: probes to facilitate cluster deployment
+
+paths:
+  /live:
+    get:
+      tags:
+        - probe
+      operationId: live
+      summary: liveness probe
+      description: liveness probe helps cluster know if the pod if still alive.
+      responses:
+        200:
+          description: pod is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - alive
+
+  /ready:
+    get:
+      tags:
+        - probe
+      operationId: ready
+      summary: readiness probe
+      description: readiness probe helps cluster know if the pod if still alive.
+      responses:
+        200:
+          description: pod is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ready
+
+  /health:
+    get:
+      tags:
+          - probe
+      operationId: health
+      summary: health probe
+      description: health probe helps cluster know if the pod if still alive.
+      responses:
+        200:
+          description: pod is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ready
+
+  /whoami:

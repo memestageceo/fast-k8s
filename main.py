@@ -5,6 +5,7 @@ A demonstration application showing how web servers, Docker containers,
 and Kubernetes work together with health probes, environment variables,
 and load balancing.
 """
+
 import logging
 import os
 import socket
@@ -21,8 +22,7 @@ from fastapi.templating import Jinja2Templates
 
 # Configure structured logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ app = FastAPI(
     title="FastAPI Kubernetes Inspector",
     description="A demonstration application for learning Kubernetes concepts",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware - configure allowed origins via environment variable for production
